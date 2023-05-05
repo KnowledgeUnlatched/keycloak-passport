@@ -1,16 +1,13 @@
-const util = require('util');
-const OAuth2Strategy = require('passport-oauth2');
+const util = require("util");
+const OAuth2Strategy = require("passport-oauth2");
 
 function Strategy(options, verify) {
   [
-    'host',
-    'realm',
-    'clientID',
-    'clientSecret',
-    'callbackURL',
-    'authorizationURL',
-    'tokenURL',
-    'userInfoURL'
+    "host",
+    "realm",
+    "clientID",
+    "clientSecret",
+    "callbackURL"
   ].forEach((k) => {
     if (!options[k]) {
       throw new Error(`${k} is required`);
@@ -20,7 +17,7 @@ function Strategy(options, verify) {
   this.options = options;
   this._base = Object.getPrototypeOf(Strategy.prototype);
   this._base.constructor.call(this, this.options, verify);
-  this.name = 'Keycloak';
+  this.name = "Keycloak";
 }
 
 util.inherits(Strategy, OAuth2Strategy);
@@ -34,6 +31,7 @@ Strategy.prototype.userProfile = function (accessToken, done) {
 
     try {
       const json = JSON.parse(body);
+
       const email = json.email;
       const userInfo = {
         keycloakId: json.sub,
@@ -45,6 +43,12 @@ Strategy.prototype.userProfile = function (accessToken, done) {
         avatar: json.avatar,
         realm: this.options.realm,
       };
+
+      if (this.options.additionalClaims !== undefined) {
+        this.options.additionalClaims.forEach((claim) => {
+          userInfo[claim] = json[claim];
+        });
+      }
 
       done(null, userInfo);
     } catch (e) {
